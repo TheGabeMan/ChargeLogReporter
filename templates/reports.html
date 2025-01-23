@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block head %}
+<Title>Monthly Report</Title>
+<a href="{{ url_for('index') }}">Home</a>
+{% endblock %}
+
+{% block body %}
+<h1>Select the month to report on</h1>
+
+<form action="{{ url_for('reports') }}" method="post">
+    <label for="month-year-select">Select Month and Year:</label>
+    <input 
+        type="month" 
+        id="month-year-select" 
+        name="month-year"
+        min="2000-01" 
+        max="2030-12"
+    >
+    <input type="submit" value="Get Report" id="btn_get_report">
+</form>
+
+
+{% if error|length > 0 %}
+Error: {{ error }}
+{% endif %}
+
+{% if report|length > 0 %}
+
+<h2>Report</h2>
+<table>
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>DeviceID</th>
+            <th>StartDateTime</th>
+            <th>EndDateTime</th>
+            <th>Energy (KWh)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% set ns = namespace(total_energy = 0) %}
+        {% for row in report %}
+        <tr>
+            <td>{{ row.UserFullName }}</td>
+            <td>{{ row.DeviceID }}</td>
+            <td>{{ row.StartDateTime|float|timestamp_to_date }}</td>
+            <td>{{ row.EndDateTime|float|timestamp_to_date }}</td>
+            <td style="text-align: right;">{{ "%.3f"|format(row.Energy) }}</td>
+        </tr>
+        {% set ns.total_energy = ns.total_energy + row.Energy %}
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="4" style="text-align: right;"><strong>Total Energy (KWh):</strong></td>
+            <td style="text-align: right;"><strong>{{ "%.3f"|format(ns.total_energy) }}</strong></td>
+        </tr>
+    </tfoot>
+</table>
+
+{% endif %}
+
+<form action="{{ url_for('generate_excel') }}" method="post">
+    <input type="hidden" name="month-year" value="{{ request.form['month-year'] }}">
+    <input type="hidden" name="report" value="{{ report|tojson }}">
+    <input type="submit" value="Download Excel" id="btn_download_excel">
+</form>
+
+
+<script>
+    // Optional: Get selected month and year
+    document.getElementById('month-year-select').addEventListener('change', function() {
+        const selectedMonthYear = this.value;
+        console.log('Selected:', selectedMonthYear);
+        // selectedMonthYear will be in format 'YYYY-MM'
+    });
+</script>
+
+{% endblock %}

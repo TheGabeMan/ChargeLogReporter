@@ -1,0 +1,5 @@
+### ZapTec API ENV settings
+username='zaptecportal'
+password='pass'
+chargerid='yourchargerid'
+installationid='yourinstalleationid'
