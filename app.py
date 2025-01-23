@@ -334,4 +334,7 @@ def sql_createtable(conn, cursor):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port="5000")
+
+
+# Frame skipped from debugging during step-in. Note: may have been skipped because of "justMyCode" option (default == true). Try setting "justMyCode": false in the debug configuration (e.g., launch.json).
