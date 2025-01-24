@@ -1,19 +1,25 @@
 # Imports
 import sqlite3
 import logging
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import os
 import requests
 import pandas as pd
+import openpyxl
 import json
+import ast
+import sys
+from io import BytesIO
 
-app = Flask(__name__,template_folder="./templates")
-IsDebug = True
 
-# Configure logging
-logging.basicConfig(filename="zaptecreport.log", encoding="utf-8",level=logging.DEBUG)
+
+
+# Create the Flask app
+def create_app():
+    app = Flask(__name__,template_folder="./templates")
+    return app
 
 def writelog(log, IsDebug=False):
     log = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {log}"
@@ -21,57 +27,6 @@ def writelog(log, IsDebug=False):
         print(log)
     logging.info(log)
 
-writelog("Starting Zaptec Report application", IsDebug)
-
-@app.template_filter('timestamp_to_date')
-def timestamp_to_date(timestamp):
-    return datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
-
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/reports", methods=["GET","POST"])
-def reports():
-     get_portal_data()
-     if request.method == "POST":
-          period = request.form.get('month-year')
-          if not period:
-               # Handle the case where 'month-year' is not provided
-               return render_template("reports.html", error="Please provide a period.")
-          else:
-               report = get_report(period=period)
-               app.logger.info(f"Report result: {report}")
-               if not report:
-                    return render_template("reports.html", error="No data available for the selected period.")
-               return render_template("reports.html", report=report)
-     else:
-          return render_template("reports.html")
-     
-@app.route("/generate_excel", methods=["POST"])
-def generate_excel():
-    report = request.form.get('report')
-    month_year = request.form.get('month-year')
-
-    if not report:
-        return render_template("generate_excel.html", error="No report data available to generate Excel.")
-
-    # Convert the report data to a DataFrame
-    report_data = json.loads(report)
-    if isinstance(report_data, dict):
-        report_data = [report_data]
-    df = pd.DataFrame(report_data)
-
-    # Generate the Excel file
-    excel_filename = f"report_{month_year}.xlsx"
-    excel_filepath = os.path.join("static", excel_filename)
-    df.to_excel(excel_filepath, index=False)
-
-    # Provide the link to download the Excel file
-    return render_template("generate_excel.html", excel_file=excel_filename)
-    
-    return render_template("generate_excel.html")
 
 def get_portal_data():
     ''' Get data from API and store in the database '''
@@ -155,7 +110,6 @@ def get_accesstoken(username, password, apiurl):
         "grant_type": "password",
         "username": username,
         "password": password
-        # "client_id": "ZaptecPortal"
     }
 
     headers = {
@@ -333,8 +287,98 @@ def sql_createtable(conn, cursor):
         return False
 
 
+logging.basicConfig(filename="zaptecreport.log", encoding="utf-8",level=logging.DEBUG)
+IsDebug = True
+writelog("Starting Zaptec Report application", IsDebug)
+app = create_app()
+
+@app.template_filter('timestamp_to_date')
+def timestamp_to_date(timestamp):
+    return datetime.fromtimestamp(timestamp).strftime('%d-%m-%Y %H:%M')
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/reports", methods=["GET","POST"])
+def reports():
+     get_portal_data()
+     if request.method == "POST":
+          period = request.form.get('month-year')
+          if not period:
+               # Handle the case where 'month-year' is not provided
+               return render_template("reports.html", error="Please provide a period.")
+          else:
+               report = get_report(period=period)
+               app.logger.info(f"Report result: {report}")
+               if not report:
+                    return render_template("reports.html", error="No data available for the selected period.")
+               return render_template("reports.html", report=report)
+     else:
+          return render_template("reports.html")
+     
+@app.route("/generate_excel", methods=["POST"])
+def generate_excel():
+    report = request.form.get('report')
+    month_year = request.form.get('month-year')
+
+    if not report:
+        return render_template("generate_excel.html", error="No report data available to generate Excel.")
+
+    # Convert the report data to a DataFrame
+    # First convert single quotes to double quotes
+    report_data = report.replace("'", '"')
+
+    # Convert the string to a dictionary
+    jsreport = json.loads(report_data)
+
+    # Filter columns in report
+    filtered_report = []
+    for entry in jsreport:
+        filtered_entry = {
+            "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "Energy (KWh)": entry["Energy"]
+        }
+        filtered_report.append(filtered_entry)
+
+    # Calculate the sum of the Energy column
+    total_energy = sum(entry["Energy"] for entry in jsreport)
+    writelog(f"Total energy for the report: {total_energy}", IsDebug)
+    filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})
+
+    tarif = os.getenv('tarif')
+    filtered_report.append({"To": "Price per KWh", "Energy (KWh)": float(tarif)})
+
+    total_cost = total_energy * float(tarif)
+    filtered_report.append({"To": "Total cost:", "Energy (KWh)": round(total_cost, 2)})
+    writelog(f"Total cost for the report: {total_cost}", IsDebug)
+
+    jsreport = filtered_report
+
+    if isinstance(jsreport, dict):
+        jsreport = [jsreport]
+    df = pd.DataFrame(jsreport)
+
+    # Generate the Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    output.seek(0)
+
+    # Send the file to the user for download
+    return send_file(output, as_attachment=True, download_name=f"report_{month_year}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+    # # Generate the Excel file
+    # excel_filename = f"report_{month_year}.xlsx"
+    # excel_filepath = os.path.join("download", excel_filename)
+    # df.to_excel(excel_filepath, index=False)
+
+    # # Provide the link to download the Excel file
+    # return render_template("generate_excel.html", excel_file=excel_filename)
+
+
 if __name__ == "__main__":
-    app.run(debug=True, port="5000")
-
-
-# Frame skipped from debugging during step-in. Note: may have been skipped because of "justMyCode" option (default == true). Try setting "justMyCode": false in the debug configuration (e.g., launch.json).
+     index()

@@ -62,7 +62,7 @@ Error: {{ error }}
 
 <form action="{{ url_for('generate_excel') }}" method="post">
     <input type="hidden" name="month-year" value="{{ request.form['month-year'] }}">
-    <input type="hidden" name="report" value="{{ report|tojson }}">
+    <input type="hidden" name="report" value="{{ report }}">
     <input type="submit" value="Download Excel" id="btn_download_excel">
 </form>
 
