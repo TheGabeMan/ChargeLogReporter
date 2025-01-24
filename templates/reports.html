@@ -58,7 +58,6 @@ Error: {{ error }}
     </tfoot>
 </table>
 
-{% endif %}
 
 <form action="{{ url_for('generate_excel') }}" method="post">
     <input type="hidden" name="month-year" value="{{ request.form['month-year'] }}">
@@ -66,6 +65,7 @@ Error: {{ error }}
     <input type="submit" value="Download Excel" id="btn_download_excel">
 </form>
 
+{% endif %}
 
 <script>
     // Optional: Get selected month and year

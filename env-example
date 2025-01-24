@@ -3,3 +3,4 @@ username='zaptecportal'
 password='pass'
 chargerid='yourchargerid'
 installationid='yourinstalleationid'
+tarif=0.35
