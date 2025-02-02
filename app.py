@@ -14,8 +14,6 @@ import sys
 from io import BytesIO
 
 
-
-
 # Create the Flask app
 def create_app():
     app = Flask(__name__,template_folder="./templates")
@@ -27,8 +25,7 @@ def writelog(log, IsDebug=False):
         print(log)
     logging.info(log)
 
-
-def get_portal_data():
+def read_api():
     ''' Get data from API and store in the database '''
 
     username = os.getenv('username')
@@ -88,6 +85,7 @@ def get_report(period):
     query = """
     SELECT * FROM sessions
     WHERE startdatetime >= ? AND startdatetime < ?
+    AND UserFullName != 'Gast Account'
     """
     cursor.execute(query, (start_timestamp, end_timestamp))
 
@@ -286,6 +284,27 @@ def sql_createtable(conn, cursor):
         writelog(f"An error occurred creating table sessions: {err}", IsDebug)
         return False
 
+def get_previous_month():
+    # Get the previous month
+    today = datetime.now()
+    first = today.replace(day=1)
+    last_month = first - timedelta(days=1)
+    return last_month.strftime("%Y-%m")
+
+
+def generate_smtp_report():
+    # Generate the report to send via email
+    # Get the report data for the previous month
+    previous_month = get_previous_month()
+    smtp_report = get_report(period=previous_month)
+    if not smtp_report:
+        writelog(f"No data available for the smtp report for period {(datetime.now() - timedelta(days=1)).strftime("%Y-%m")}", IsDebug)
+        return
+    writelog(f"SMTP Report data: {smtp_report}", IsDebug)
+    return
+
+
+
 
 logging.basicConfig(filename="zaptecreport.log", encoding="utf-8",level=logging.DEBUG)
 IsDebug = True
@@ -303,7 +322,7 @@ def index():
 
 @app.route("/reports", methods=["GET","POST"])
 def reports():
-     get_portal_data()
+     read_api()
      if request.method == "POST":
           period = request.form.get('month-year')
           if not period:
@@ -356,7 +375,6 @@ def generate_excel():
     writelog(f"Total cost for the report: {total_cost}", IsDebug)
 
     jsreport = filtered_report
-
     if isinstance(jsreport, dict):
         jsreport = [jsreport]
     df = pd.DataFrame(jsreport)
@@ -370,14 +388,6 @@ def generate_excel():
     # Send the file to the user for download
     return send_file(output, as_attachment=True, download_name=f"report_{month_year}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-
-    # # Generate the Excel file
-    # excel_filename = f"report_{month_year}.xlsx"
-    # excel_filepath = os.path.join("download", excel_filename)
-    # df.to_excel(excel_filepath, index=False)
-
-    # # Provide the link to download the Excel file
-    # return render_template("generate_excel.html", excel_file=excel_filename)
 
 
 if __name__ == "__main__":
