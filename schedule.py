@@ -11,8 +11,8 @@ from datetime import datetime
 
 
 def main():
-    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
-    app.writelog("Starting Zaptec Scheduler", True)
+#    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
+#    app.writelog("Starting Zaptec Scheduler", True)
 
     app.read_api()
 
@@ -21,16 +21,23 @@ def main():
     
     if int(datetime.now().strftime("%d")) == int(reportday):
         app.writelog("Generate report", True)
-        if app.generate_smtp_report() == 0:
+        smtp_report_attachment = app.generate_smtp_report()
+        if smtp_report_attachment == 0:
             app.writelog("SMTP Report not generated", True)
-
+        else:
+            app.writelog("SMTP Report generated", True)
+            if app.send_email(smtp_report_attachment, app.get_previous_month()):
+                app.writelog("SMTP Report sent", True)
+            else:
+                app.writelog("SMTP Report not sent", True)
     else:
         app.writelog("Not report day", True)
     
-
     app.writelog("End Zaptec Scheduler", True)
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
+    app.writelog("Starting Zaptec Scheduler", True)
     main()
 

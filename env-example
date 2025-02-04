@@ -3,5 +3,19 @@ username='zaptecportal'
 password='pass'
 chargerid='yourchargerid'
 installationid='yourinstalleationid'
+
+### Report settings
 tarif=0.35
-reportday=2
+reportday=4
+
+### Email settings
+smtp_subject='ZapTec Laadpaal Report for Me'
+smtp_from='personal@email.com'
+smtp_to='accountant@email.com'
+smtp_body='ZapTec Laadpaal Report for Me'
+
+### SMTP Server
+SMTP_SERVER='smtp.server.com'
+SMTP_PORT=465
+EMAIL_SENDER='<login email user>'
+EMAIL_PASSWORD='<password>'

@@ -12,6 +12,9 @@ import json
 import ast
 import sys
 from io import BytesIO
+import smtplib
+from email.message import EmailMessage
+import io
 
 
 # Create the Flask app
@@ -55,18 +58,18 @@ def read_api():
     ## Open DB connection to insert data
     conn, cursor = sql_connect()
     for key in charge_history['Data']:
-        writelog(f"From API retrieved {key['Id']} - {key['UserUserName']}", IsDebug)
+        writelog(f"From API retrieved {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']}", IsDebug)
         KeyIsUnique = False
         KeyIsUnique = check_unique_key(key,cursor)
         if KeyIsUnique:
             writelog(f"Write record {key['Id']}{key['UserUserName']} to database.", IsDebug)
             Result = sql_insert(key,cursor,conn)
             if not Result:
-                writelog(f"Error writing record {key['Id']}{key['UserUserName']} to the database.", IsDebug)
+                writelog(f"Error writing record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} to the database.", IsDebug)
             else:
-                writelog(f"Record {key['Id']}{key['UserUserName']} successfully written to the database.", IsDebug)  
+                writelog(f"Record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} successfully written to the database.", IsDebug)  
         else:
-            writelog(f"Record {key['Id']}{key['UserUserName']} already exists in the database.", IsDebug)
+            writelog(f"Record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} already exists in the database.", IsDebug)
     conn.close()
 
 def get_report(period):
@@ -299,16 +302,71 @@ def generate_smtp_report():
     smtp_report = get_report(period=previous_month)
     if not smtp_report:
         writelog(f"No data available for the smtp report for period {(datetime.now() - timedelta(days=1)).strftime("%Y-%m")}", IsDebug)
-        return
-    writelog(f"SMTP Report data: {smtp_report}", IsDebug)
-    return
+        return 
+    else:
+        return generate_excel_for_smtp_report(smtp_report)
 
 
+def generate_excel_for_smtp_report(report):
+    # Convert the report from JSON
+    # json_report = json.loads(report)
+    filtered_report = []
+    for entry in report:
+        filtered_entry = {
+            "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "Energy (KWh)": entry["Energy"]
+        }
+        filtered_report.append(filtered_entry)
+
+    # Calculate the sum of the Energy column
+    total_energy = sum(entry["Energy"] for entry in report)
+    writelog(f"Total energy for the report: {total_energy}", IsDebug)
+    filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})  
+
+    # Read price per KWh from environment variable
+    tarif = os.getenv('tarif')
+    filtered_report.append({"To": "Price per KWh", "Energy (KWh)": float(tarif)})
+
+    total_cost = total_energy * float(tarif)
+    filtered_report.append({"To": "Total cost:", "Energy (KWh)": round(total_cost, 2)})
+    writelog(f"Total cost for the report: {total_cost}", IsDebug)
+
+    # Convert the filtered report to a DataFrame
+    df = pd.DataFrame(filtered_report)
+
+    # Generate the Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False)
+    output.seek(0)
+
+    return output
+
+def send_email(smtp_report_attachment, period):
+    # Send the email with the SMTP report attachment
+    filename = f"{period} {os.getenv('smtp_subject')}.xlsx"
+    msg = EmailMessage()
+    msg['Subject'] = period + " - " + os.getenv('smtp_subject')
+    msg['From'] = os.getenv('smtp_from')
+    msg['To'] = os.getenv('smtp_to')
+    msg.set_content(os.getenv('smtp_body'))
+    msg.add_attachment(smtp_report_attachment.getvalue(), maintype='application', subtype='octet-stream', filename=filename)
 
 
-logging.basicConfig(filename="zaptecreport.log", encoding="utf-8",level=logging.DEBUG)
+    try:
+        # Send email
+        with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT')) as server:
+            server.login(os.getenv('EMAIL_SENDER'), os.getenv('EMAIL_PASSWORD'))
+            server.send_message(msg)
+        writelog("Email sent successfully", IsDebug)
+        return True
+    except smtplib.SMTPException as e:
+        writelog(f"Failed to send email: {e}", IsDebug)
+        return False
+
+
 IsDebug = True
-writelog("Starting Zaptec Report application", IsDebug)
 app = create_app()
 
 @app.template_filter('timestamp_to_date')
@@ -391,4 +449,7 @@ def generate_excel():
 
 
 if __name__ == "__main__":
-     index()
+    logging.basicConfig(filename="test.log", encoding="utf-8",level=logging.DEBUG)
+    IsDebug = True
+    writelog("Starting Zaptec Report application", IsDebug)
+    index()
