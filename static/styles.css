@@ -1,3 +1,28 @@
+/* Styles used by Zaptec Portal
+   https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+   https://portal.zaptec.com/assets/index-Bu2nBqex.css
+*/
+
+
  body {
     background-color: aqua ;
  }
+
+ .bg-forest {
+   --tw-bg-opacity: 1;
+   background-color: rgb(25 49 47 / var(--tw-bg-opacity, 1))
+}
+
+.color-white {
+   color: rgb(255, 255, 255)
+}
+
+
+.pagetitle {
+   display: block;
+   font-size: 1.75em;
+   margin: 1em 0;
+   font-weight: 700;
+   text-align: center;
+   
+}

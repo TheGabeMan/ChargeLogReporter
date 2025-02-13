@@ -389,7 +389,7 @@ def reports():
                app.logger.info(f"Report result: {report}")
                if not report:
                     return render_template("reports.html", error="No data available for the selected period.")
-               return render_template("reports.html", report=report)
+               return render_template("reports.html", report=report, period=period)
      else:
           return render_template("reports.html")
      
