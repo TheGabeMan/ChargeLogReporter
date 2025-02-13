@@ -34,26 +34,39 @@ Error: {{ error }}
             <th>DeviceID</th>
             <th>StartDateTime</th>
             <th>EndDateTime</th>
-            <th>Energy (KWh)</th>
+            <th>Energy billable (KWh)</th>
+            <th>Energy non-billable (KWh)</th>
         </tr>
     </thead>
     <tbody>
-        {% set ns = namespace(total_energy = 0) %}
+        {% set ns = namespace(total_billable_energy = 0, total_non_billable_energy = 0) %}
         {% for row in report %}
         <tr>
-            <td>{{ row.UserFullName }}</td>
-            <td>{{ row.DeviceID }}</td>
-            <td>{{ row.StartDateTime|float|timestamp_to_date }}</td>
-            <td>{{ row.EndDateTime|float|timestamp_to_date }}</td>
-            <td style="text-align: right;">{{ "%.3f"|format(row.Energy) }}</td>
+            {% if row.UserFullName == 'Gast Account' %}
+                <td>{{ row.UserFullName }}</td>
+                <td>{{ row.DeviceID }}</td>
+                <td>{{ row.StartDateTime|float|timestamp_to_date }}</td>
+                <td>{{ row.EndDateTime|float|timestamp_to_date }}</td>
+                <td></td>
+                <td style="text-align: right;">{{ "%.3f"|format(row.Energy) }}</td>
+                {% set ns.total_non_billable_energy = ns.total_non_billable_energy + row.Energy %}
+            {% else %}
+                <td>{{ row.UserFullName }}</td>
+                <td>{{ row.DeviceID }}</td>
+                <td>{{ row.StartDateTime|float|timestamp_to_date }}</td>
+                <td>{{ row.EndDateTime|float|timestamp_to_date }}</td>
+                <td style="text-align: right;">{{ "%.3f"|format(row.Energy) }}</td>
+                <td></td>
+                {% set ns.total_billable_energy = ns.total_billable_energy + row.Energy %}
+            {% endif %}
         </tr>
-        {% set ns.total_energy = ns.total_energy + row.Energy %}
         {% endfor %}
     </tbody>
     <tfoot>
         <tr>
             <td colspan="4" style="text-align: right;"><strong>Total Energy (KWh):</strong></td>
-            <td style="text-align: right;"><strong>{{ "%.3f"|format(ns.total_energy) }}</strong></td>
+            <td style="text-align: right;"><strong>{{ "%.3f"|format(ns.total_billable_energy) }}</strong></td>
+            <td style="text-align: right;"><strong>{{ "%.3f"|format(ns.total_non_billable_energy) }}</strong></td>
         </tr>
     </tfoot>
 </table>

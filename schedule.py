@@ -20,7 +20,7 @@ def main():
     app.writelog(f"Check if report day {reportday}", True)
     
     if int(datetime.now().strftime("%d")) == int(reportday):
-        app.writelog("Generate report", True)
+        app.writelog("It is report day, generate report", True)
         smtp_report_attachment = app.generate_smtp_report()
         if smtp_report_attachment == 0:
             app.writelog("SMTP Report not generated", True)

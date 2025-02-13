@@ -84,11 +84,10 @@ def get_report(period):
     end_date_str = datetime.fromtimestamp(end_timestamp).strftime('%Y-%m-%d %H:%M:%S')
     writelog(f"Generate report for Start: {start_date_str} - End: {end_date_str}", IsDebug)
 
-    # Query to fetch the report data for the given period    
+    # Query to fetch the report data for the given period INCLUDING Gast Account
     query = """
     SELECT * FROM sessions
     WHERE startdatetime >= ? AND startdatetime < ?
-    AND UserFullName != 'Gast Account'
     """
     cursor.execute(query, (start_timestamp, end_timestamp))
 
@@ -139,7 +138,6 @@ def get_charge_history_installation(access_token, apiurl, installationid, GroupB
     :return: List of charge history entries
     """
 
-    # Default to last 30 days if no dates specified
     # We go back 3 months to get a good amount of data
     start_date, end_date = get_report_dates()
 
@@ -172,7 +170,7 @@ def get_report_dates():
     # Get current date in UTC
     current_date = datetime.now(ZoneInfo("UTC"))
     start_date = current_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    month = start_date.month -3
+    month = start_date.month -2
     year = start_date.year
 
     if month <= 0:
