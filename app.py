@@ -411,15 +411,16 @@ def generate_excel():
     # Filter columns in report
     filtered_report = []
     for entry in jsreport:
-        filtered_entry = {
-            "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
-            "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
-            "Energy (KWh)": entry["Energy"]
-        }
-        filtered_report.append(filtered_entry)
+        if entry["UserFullName"] != "Gast Account":
+            filtered_entry = {
+                "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
+                "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
+                "Energy (KWh)": entry["Energy"]
+            }
+            filtered_report.append(filtered_entry)
 
     # Calculate the sum of the Energy column
-    total_energy = sum(entry["Energy"] for entry in jsreport)
+    total_energy = sum(entry["Energy"] for entry in jsreport if entry["UserFullName"] != "Gast Account")
     writelog(f"Total energy for the report: {total_energy}", IsDebug)
     filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})
 

@@ -5,7 +5,8 @@
 
 
  body {
-    background-color: aqua ;
+    
+    line-height: 1;
  }
 
  .bg-forest {
@@ -24,5 +25,13 @@
    margin: 1em 0;
    font-weight: 700;
    text-align: center;
-   
+}
+
+
+.pagefooter {
+   display: block;
+   font-size: 16px;
+   margin: 1em 0;
+   font-weight: 400;
+   text-align: center;
 }
