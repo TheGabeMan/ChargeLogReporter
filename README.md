@@ -9,6 +9,3 @@ Todo:
 - PDF export option
 - GUI Layout:
     - Report should have page margins on left and right side
-
-
-

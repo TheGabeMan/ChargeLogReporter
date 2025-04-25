@@ -5,6 +5,7 @@
 # from zoneinfo import ZoneInfo
 # import storage
 import app
+import sharedcomps
 import logging
 import os
 from datetime import datetime
@@ -14,7 +15,7 @@ def main():
 #    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
 #    app.writelog("Starting Zaptec Scheduler", True)
 
-    app.read_api()
+    sharedcomps.read_api()
 
     reportday=os.getenv('reportday')
     app.writelog(f"Check if report day {reportday}", True)
