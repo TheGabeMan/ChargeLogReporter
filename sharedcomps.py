@@ -52,18 +52,18 @@ def read_api():
     ## Open DB connection to insert data
     conn, cursor = sql_connect()
     for key in charge_history['Data']:
-        writelog(f"From API retrieved {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} - Date: {key['StartDateTime']}", IsDebug)
+        logging.info(f"From API retrieved {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} - Date: {key['StartDateTime']}")
         KeyIsUnique = False
         KeyIsUnique = sql_check_unique_key(key,cursor)
         if KeyIsUnique:
-            writelog(f"Write record {key['Id']}{key['UserUserName']} to database.", IsDebug)
+            logging.info(f"Write {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} - Date: {key['StartDateTime']} to database.")
             Result = sql_insert(key,cursor,conn)
             if not Result:
-                writelog(f"Error writing record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} to the database.", IsDebug)
+                logging.info(f"Error writing record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} to the database.")
             else:
-                writelog(f"Record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} successfully written to the database.", IsDebug)  
+                logging.info(f"Record {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} successfully written to the database.")  
         else:
-            writelog(f"Record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} already exists in the database.", IsDebug)
+            logging.info(f"Record {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} already exists in the database.")
     conn.close()
 
 def get_accesstoken(username, password, apiurl):
@@ -88,10 +88,10 @@ def get_accesstoken(username, password, apiurl):
 
         auth_data = response.json()
         access_token = auth_data.get('access_token')
-        writelog(f"Access token: OK", IsDebug)
+        logging.info(f"Access token: OK")
         return access_token
     except requests.exceptions.RequestException as e:
-        writelog(f"Authentication failed: {e}", IsDebug)
+        logging.info(f"Authentication failed: {e}")
         return False
 
 def get_charge_history_installation(access_token, apiurl, installationid):
@@ -139,19 +139,19 @@ def get_charge_history_installation(access_token, apiurl, installationid):
             "PageIndex": PageIndex
         }
 
-        writelog(f"Retrieving charge history from {start_date} to {end_date} - PageIndex {PageIndex}", IsDebug)
+        logging.info(f"Retrieving charge history from {start_date} to {end_date} - PageIndex {PageIndex}")
         try:
             response = requests.get(history_url, headers=headers, params=params)
             response.raise_for_status()
             charge_history = response.json()
-            writelog(f"Charge history retrieved succesful for page {PageIndex}", IsDebug)
+            logging.info(f"Charge history retrieved succesful for page {PageIndex}")
             if len(charge_history['Data']) < PageSize:
                 return charge_history
             else:
                 PageIndex += 1
-                writelog(f"PageIndex {PageIndex} - continue to get more data", IsDebug)
+                logging.info(f"PageIndex {PageIndex} - continue to get more data")
         except requests.exceptions.RequestException as e:
-            writelog(f"Failed to retrieve charge history: {e}", IsDebug)
+            logging.info(f"Failed to retrieve charge history: {e}")
             return []
 
 def get_report_dates():
@@ -183,7 +183,7 @@ def get_report(period):
     end_timestamp = int((period_date.replace(day=28) + timedelta(days=4)).replace(day=1).timestamp())
     start_date_str = datetime.fromtimestamp(start_timestamp).strftime('%Y-%m-%d %H:%M:%S')
     end_date_str = datetime.fromtimestamp(end_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-    writelog(f"Generate report for Start: {start_date_str} - End: {end_date_str}", IsDebug)
+    logging.info(f"Generate report for Start: {start_date_str} - End: {end_date_str}")
 
     # Query to fetch the report data for the given period INCLUDING Guest Account
     query = """
@@ -207,7 +207,7 @@ def generate_smtp_report():
     previous_month = get_previous_month()
     smtp_report = get_report(period=previous_month)
     if not smtp_report:
-        writelog(f"No data available for the smtp report for period {(datetime.now() - timedelta(days=1)).strftime("%Y-%m")}", IsDebug)
+        logging.info(f"No data available for the smtp report for period {(datetime.now() - timedelta(days=1)).strftime("%Y-%m")}")
         return 
     else:
         return generate_excel_for_smtp_report(smtp_report)
@@ -226,7 +226,7 @@ def generate_excel_for_smtp_report(report):
 
     # Calculate the sum of the Energy column
     total_energy = sum(entry["Energy"] for entry in report)
-    writelog(f"Total energy for the report: {total_energy}", IsDebug)
+    logging.info(f"Total energy for the report: {total_energy}")
     filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})  
 
     # Read price per KWh from environment variable
@@ -235,7 +235,7 @@ def generate_excel_for_smtp_report(report):
 
     total_cost = total_energy * float(tarif)
     filtered_report.append({"To": "Total cost:", "Energy (KWh)": round(total_cost, 2)})
-    writelog(f"Total cost for the report: {total_cost}", IsDebug)
+    logging.info(f"Total cost for the report: {total_cost}")
 
     # Convert the filtered report to a DataFrame
     df = pd.DataFrame(filtered_report)
@@ -269,7 +269,7 @@ def generate_excel_from_reportform(report, month_year):
 
     # Calculate the sum of the Energy column
     total_energy = sum(entry["Energy"] for entry in jsreport if entry["UserFullName"] != "Guest Account")
-    writelog(f"Total energy for the report: {total_energy}", IsDebug)
+    logging.info(f"Total energy for the report: {total_energy}")
     filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})
 
     # Read price per KWh from environment variable
@@ -278,7 +278,7 @@ def generate_excel_from_reportform(report, month_year):
 
     total_cost = total_energy * float(tarif)
     filtered_report.append({"To": "Total cost:", "Energy (KWh)": round(total_cost, 2)})
-    writelog(f"Total cost for the report: {total_cost}", IsDebug)
+    logging.info(f"Total cost for the report: {total_cost}")
 
     jsreport = filtered_report
     if isinstance(jsreport, dict):
@@ -308,7 +308,7 @@ def sql_connect():
     while True:
         conn = sqlite3.connect('chargehistory.db')
         if conn is None:
-            writelog("Failed to connect to the database in sql_connect().", IsDebug)
+            logging.info("Failed to connect to the database in sql_connect().")
             raise sqlite3.Error("Failed to connect to the database in sql_connect().")
             conn = None
             cursor = None
@@ -318,7 +318,7 @@ def sql_connect():
         ## Check if the table exists
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sessions'")
         if cursor.fetchone() is None:
-            writelog("Table sessions does not exist, try create it.", IsDebug)
+            logging.info("Table sessions does not exist, try create it.")
             sql_createtable(conn=conn, cursor=cursor)
             ## As the table is created, we need to get data from the api
             read_api()
@@ -328,7 +328,7 @@ def sql_connect():
 def sql_insert(key, cursor, conn):
     # Create Tabel if not exists
     if not sql_createtable(conn=conn, cursor=cursor):
-        writelog("Error creating table", IsDebug)
+        logging.info("Error creating table")
         return False
     # Single insertion
     try:
@@ -368,11 +368,11 @@ def sql_insert(key, cursor, conn):
         return True
     except sqlite3.IntegrityError as err:
         conn.rollback()
-        writelog(f"Integrity error occurred: {err}", IsDebug)
+        logging.info(f"Integrity error occurred: {err}")
         return False
     except sqlite3.Error as err:
         conn.rollback()
-        writelog(f"An error occurred: {err}", IsDebug)
+        logging.info(f"An error occurred: {err}")
         return False
     return True
 
@@ -399,14 +399,14 @@ def sql_createtable(conn, cursor):
         return True
     except sqlite3.Error as err:
         conn.rollback()
-        writelog(f"An error occurred creating table sessions: {err}", IsDebug)
+        logging.info(f"An error occurred creating table sessions: {err}")
         return False
 
 def sql_check_unique_key(key,cursor):
     # Check if the Id is unique
     cursor.execute('SELECT COUNT(1) FROM sessions WHERE "Id" = ?', (key['Id'],))
     if cursor.fetchone()[0] > 0:
-        writelog(f"Id {key['Id']} already exists in the database.")
+        # Record already exists return False
         return False
     return True
 
@@ -426,10 +426,10 @@ def send_email(smtp_report_attachment, period):
         with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT')) as server:
             server.login(os.getenv('EMAIL_SENDER'), os.getenv('EMAIL_PASSWORD'))
             server.send_message(msg)
-        writelog("Email sent successfully", IsDebug)
+        logging.info("Email sent successfully", IsDebug)
         return True
     except smtplib.SMTPException as e:
-        writelog(f"Failed to send email: {e}", IsDebug)
+        logging.info(f"Failed to send email: {e}", IsDebug)
         return False
 
 

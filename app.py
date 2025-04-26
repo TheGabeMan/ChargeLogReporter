@@ -1,16 +1,20 @@
 # Imports
 import sharedcomps
 import logging
+logger = logging.getLogger(__name__)
 from flask import Flask, render_template, request, redirect, send_file
 from datetime import datetime
-# from zoneinfo import ZoneInfo
-
 
 # Create the Flask app
 def create_app():
-    app = Flask(__name__,template_folder="./templates")
-    logging.basicConfig(filename="app.log", encoding="utf-8",level=logging.DEBUG)
-    sharedcomps.writelog("Starting Zaptec Report application from App()", IsDebug)
+    app = Flask(__name__, template_folder="./templates")
+    logging.basicConfig(
+        filename="app.log", 
+        level=logging.INFO, 
+        encoding="utf-8",
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logger.info("Welcome, Starting Zaptec Report application")
     return app
 
 
@@ -34,10 +38,14 @@ def reports():
                return render_template("reports.html", error="Please provide a period.")
           else:
                report = sharedcomps.get_report(period=period)
-               app.logger.info(f"Report result: {report}")
                if not report:
+                    app.logger.info(f"Report returned no data for period: {period}")
                     return render_template("reports.html", error="No data available for the selected period.")
-               return render_template("reports.html", report=report, period=period)
+               else:
+                    app.logger.info(f"Report returned {len(report)} rows for period: {period}")
+                    app.logger.info(f"First row of report: {report[0]["Id"][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
+                    app.logger.info(f"Last row of report: {report[-1]["Id"][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
+                    return render_template("reports.html", report=report, period=period)
      else:
           return render_template("reports.html")
      
@@ -55,6 +63,5 @@ def generate_excel():
 
 if __name__ == "__main__":
     # logging.basicConfig(filename="app.log", encoding="utf-8",level=logging.DEBUG)
-    IsDebug = True
-    sharedcomps.writelog("Starting Zaptec Report application from Main", IsDebug)
+    app.logger.info("Starting Zaptec Report application from Main")
     index()
