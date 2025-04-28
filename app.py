@@ -2,7 +2,7 @@
 import sharedcomps
 import logging
 logger = logging.getLogger(__name__)
-from flask import Flask, render_template, request, redirect, send_file
+from flask import Flask, render_template, request, send_file
 from datetime import datetime
 
 # Create the Flask app
@@ -61,6 +61,5 @@ def generate_excel():
     # return redirect("/reports")
 
 if __name__ == "__main__":
-    # logging.basicConfig(filename="app.log", encoding="utf-8",level=logging.DEBUG)
     app.logger.info("Starting Zaptec Report application from Main")
-    index()
+    app.run()

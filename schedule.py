@@ -32,7 +32,6 @@ def main():
         logger.info("Not report day")
     
     logger.info("End Zaptec Scheduler")
-    logging.shutdown()
 
 
 if __name__ == '__main__':
