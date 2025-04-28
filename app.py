@@ -42,8 +42,8 @@ def reports():
                     return render_template("reports.html", error="No data available for the selected period.")
                else:
                     app.logger.info(f"Report returned {len(report)} rows for period: {period}")
-                    app.logger.info(f"First row of report: {report[0]["Id"][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
-                    app.logger.info(f"Last row of report: {report[-1]["Id"][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
+                    app.logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
+                    app.logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
                     return render_template("reports.html", report=report, period=period)
      else:
           return render_template("reports.html")
@@ -62,4 +62,4 @@ def generate_excel():
 
 if __name__ == "__main__":
     app.logger.info("Starting Zaptec Report application from Main")
-    app.run()
+    app.run(host='0.0.0.0', port=5000, debug=True)
