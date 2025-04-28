@@ -19,12 +19,12 @@ def main():
     
     if int(datetime.now().strftime("%d")) == int(reportday):
         logger.info("It is report day, generate report")
-        smtp_report_attachment = app.generate_smtp_report()
+        smtp_report_attachment = sharedcomps.generate_smtp_report()
         if smtp_report_attachment == 0:
             logger.info("SMTP Report not generated")
         else:
             logger.info("SMTP Report generated")
-            if sharedcomps.send_email(smtp_report_attachment, app.get_previous_month()):
+            if sharedcomps.send_email(smtp_report_attachment, sharedcomps.get_previous_month()):
                 logger.info("SMTP Report sent")
             else:
                 logger.info("SMTP Report not sent")

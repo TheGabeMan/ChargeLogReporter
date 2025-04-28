@@ -13,13 +13,6 @@ from io import BytesIO
 import smtplib
 from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, send_file
-IsDebug = True
-
-def writelog(log, IsDebug=False):
-    log = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - {log}"
-    if IsDebug:
-        print(log)
-    logging.info(log)
 
 def read_api():
     ''' Get data from API and store in the database '''
@@ -259,7 +252,7 @@ def generate_excel_from_reportform(report, month_year):
     # Filter columns in report
     filtered_report = []
     for entry in jsreport:
-        if entry["UserFullName"] != "GGuestast Account":
+        if entry["UserFullName"] != "Guest Account":
             filtered_entry = {
                 "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
                 "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
@@ -420,16 +413,15 @@ def send_email(smtp_report_attachment, period):
     msg.set_content(os.getenv('smtp_body'))
     msg.add_attachment(smtp_report_attachment.getvalue(), maintype='application', subtype='octet-stream', filename=filename)
 
-
     try:
         # Send email
         with smtplib.SMTP_SSL(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT')) as server:
             server.login(os.getenv('EMAIL_SENDER'), os.getenv('EMAIL_PASSWORD'))
             server.send_message(msg)
-        logging.info("Email sent successfully", IsDebug)
+        logging.info("Email sent successfully")
         return True
     except smtplib.SMTPException as e:
-        logging.info(f"Failed to send email: {e}", IsDebug)
+        logging.info(f"Failed to send email: {e}")
         return False
 
 

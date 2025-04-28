@@ -18,7 +18,6 @@ def create_app():
     return app
 
 
-IsDebug = True
 app = create_app()
 
 @app.template_filter('timestamp_to_date')
