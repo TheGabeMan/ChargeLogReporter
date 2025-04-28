@@ -1,43 +1,39 @@
 # Main Script for ZapTec API
-# import os
-# import requests
-# from datetime import datetime, timedelta
-# from zoneinfo import ZoneInfo
-# import storage
-import app
+import sharedcomps
 import logging
+logger = logging.getLogger(__name__)
 import os
 from datetime import datetime
 
-
 def main():
-#    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
-#    app.writelog("Starting Zaptec Scheduler", True)
-
-    app.read_api()
-
+    logging.basicConfig(
+        filename='schedule.log', 
+        level=logging.INFO, 
+        encoding="utf-8", 
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+    logger.info("Welcome, Starting ZapTec Report application from Schedule.py")
+    sharedcomps.read_api()
     reportday=os.getenv('reportday')
-    app.writelog(f"Check if report day {reportday}", True)
+    logger.info(f"Check if report day {reportday}")
     
     if int(datetime.now().strftime("%d")) == int(reportday):
-        app.writelog("It is report day, generate report", True)
-        smtp_report_attachment = app.generate_smtp_report()
+        logger.info("It is report day, generate report")
+        smtp_report_attachment = sharedcomps.generate_smtp_report()
         if smtp_report_attachment == 0:
-            app.writelog("SMTP Report not generated", True)
+            logger.info("SMTP Report not generated")
         else:
-            app.writelog("SMTP Report generated", True)
-            if app.send_email(smtp_report_attachment, app.get_previous_month()):
-                app.writelog("SMTP Report sent", True)
+            logger.info("SMTP Report generated")
+            if sharedcomps.send_email(smtp_report_attachment, sharedcomps.get_previous_month()):
+                logger.info("SMTP Report sent")
             else:
-                app.writelog("SMTP Report not sent", True)
+                logger.info("SMTP Report not sent")
     else:
-        app.writelog("Not report day", True)
+        logger.info("Not report day")
     
-    app.writelog("End Zaptec Scheduler", True)
+    logger.info("End Zaptec Scheduler")
+    logging.shutdown()
 
 
-if __name__ == "__main__":
-    logging.basicConfig(filename="zaptecschedule.log", encoding="utf-8",level=logging.DEBUG)
-    app.writelog("Starting Zaptec Scheduler", True)
+if __name__ == '__main__':
     main()
-

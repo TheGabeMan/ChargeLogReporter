@@ -46,7 +46,7 @@ Error: {{ error }}
         <tbody>
             {% set ns = namespace(total_billable_energy = 0, total_non_billable_energy = 0) %}
             {% for row in report %}
-                {% if row.UserFullName == 'Gast Account' %}
+                {% if row.UserFullName == 'Guest Account' %}
                     <tr style="color: rgb(147, 111, 73);">
                         <td><em>{{ row.UserFullName }}</em></td>
                         <td><em>{{ row.DeviceID }}</em></td>
@@ -76,6 +76,11 @@ Error: {{ error }}
                 <td class="text-right"><strong>{{ "%.3f"|format(ns.total_non_billable_energy) }}</strong></td>
             </tr>
         </tfoot>
+    </table>
+    <table class="table table-striped table-bordered ">
+        <tr>
+            <h6 style="font-size: small;">*Non-billable energy is the energy consumed by the 'Guest Account'.</h6>
+        </tr>
     </table>
     <table class="table table-striped table-bordered ">
         <tr>
