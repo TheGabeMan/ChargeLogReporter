@@ -60,6 +60,14 @@ def generate_excel():
 
     # return redirect("/reports")
 
+@app.route("/getdata", methods=["GET","POST"])
+def getdata():
+    if request.method == "POST":
+        sharedcomps.read_api()
+        return render_template("getdata.html", output="Report data has been updated.")
+    else:
+        return render_template("getdata.html")
+
 if __name__ == "__main__":
     app.logger.info("Starting Zaptec Report application from Main")
     app.run(host='0.0.0.0', port=5000, debug=True)
