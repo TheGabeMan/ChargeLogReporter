@@ -24,7 +24,7 @@ Email & SMTP settings:
 After start you should be able to find a basic webpage at port 5000. This is where the flask server is running.
 
 # Database
-The database is auto generated when not present and will try to read the last 365 days of data from the ZapTec API which is the max number of days ZapTec offers data. The database is written on the mounted volume and you can easily make a backup of it in this way. By running the schedule.py every day, the daily sessions will be read from the API and stored in the database. Be aware that a session is from start to disconnect of the car. When you pause charging in between, it will still be one session.
+The database is auto generated when not present and will try to read the last 365 days of data from the ZapTec API which is the max number of days ZapTec offers data. The database is written on the mounted volume in the 'database' directory and you can easily make a backup of it in this way. By running the schedule.py every day, the daily sessions will be read from the API and stored in the database. Be aware that a session is from start to disconnect of the car. When you pause charging in between, it will still be one session.
 
 # Guest Account
 When you create an account in the ZapTec portal with the exact name "Guest Account", sessions by this user will show when you ask for a monthly report, but will be filtered out in the Excel export.
