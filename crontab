@@ -1,0 +1,2 @@
+# Example: Run a Python script every day at 3:00 AM
+0 3 * * * python /app/schedule.py

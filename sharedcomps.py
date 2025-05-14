@@ -298,7 +298,7 @@ def get_previous_month():
 def sql_connect():
     # Connect to a database (creates one if it doesn't exist)
     while True:
-        conn = sqlite3.connect('chargehistory.db')
+        conn = sqlite3.connect('./database/chargehistory.db')
         if conn is None:
             logging.info("Failed to connect to the database in sql_connect().")
             raise sqlite3.Error("Failed to connect to the database in sql_connect().")
