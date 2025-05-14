@@ -16,10 +16,10 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 COPY crontab /etc/cron.d/reporting-cron
 
 # Make the cron file executable
-RUN chmod 0644 /etc/cron.d/my-app-cron
+RUN chmod 0644 /etc/cron.d/reporting-cron
 
 # Load the cron table
-RUN crontab /etc/cron.d/my-app-cron
+RUN crontab /etc/cron.d/reporting-cron
 
 # Make port 5000 available to the outside world
 EXPOSE 5000
@@ -27,9 +27,9 @@ EXPOSE 5000
 # Define the command to run the Flask application AND the cron service
 CMD ["sh", "-c", "cron && python your_app.py"]
 
-# docker build -t zaptecreporting .
+# docker build -t chargelogreporter .
 
 # docker run -p 5000:5000 \
 #            -v "$(pwd)/.env:/app/.env" \
 #            -v "$(pwd)/database:/app/database" \
-#            my-flask-app-with-cron
+#            chargelogreporter
