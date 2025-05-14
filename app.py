@@ -26,6 +26,11 @@ def create_app():
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
     logger.info("Welcome, Starting Zaptec Report application (Docker logs)")
+
+    # For testing purposes:
+    envtarif = os.getenv('envtarif')
+    logger.info(f"Env tarif: {envtarif}")
+
     logger.info("Again Welcome, Starting Zaptec Report application (Docker logs)")
     return app
 
