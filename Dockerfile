@@ -25,11 +25,14 @@ RUN crontab /etc/cron.d/reporting-cron
 EXPOSE 5000
 
 # Define the command to run the Flask application AND the cron service
-CMD ["sh", "-c", "cron && python your_app.py"]
+CMD ["sh", "-c", "cron && python app.py"]
 
 # docker build -t chargelogreporter .
 
-# docker run -p 5000:5000 \
+# docker run -d -p 5000:5000 \
 #            -v "$(pwd)/.env:/app/.env" \
 #            -v "$(pwd)/database:/app/database" \
-#            chargelogreporter
+#            chargelogreporter:latest
+
+
+# sudo docker exec -it eloquent_gould /bin/sh

@@ -5,6 +5,10 @@ logger = logging.getLogger(__name__)
 from flask import Flask, render_template, request, send_file
 from datetime import datetime
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Create the Flask app
 def create_app():
@@ -15,7 +19,14 @@ def create_app():
         encoding="utf-8",
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
-    logger.info("Welcome, Starting Zaptec Report application")
+    # Add StreamHandler for Docker logs
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    logger.info("Welcome, Starting Zaptec Report application (Docker logs)")
+    logger.info("Again Welcome, Starting Zaptec Report application (Docker logs)")
     return app
 
 
@@ -39,13 +50,20 @@ def reports():
           else:
                report = sharedcomps.get_report(period=period)
                if not report:
-                    app.logger.info(f"Report returned no data for period: {period}")
+                    logger.info(f"Report returned no data for period: {period}")
                     return render_template("reports.html", error="No data available for the selected period.")
                else:
-                    app.logger.info(f"Report returned {len(report)} rows for period: {period}")
-                    app.logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
-                    app.logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
-                    tarif = float(os.getenv('tarif'))
+                    logger.info(f"Report returned {len(report)} rows for period: {period}")
+                    logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
+                    logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
+                    envtarif = os.getenv('envtarif')
+                    logger.info(f"Env tarif: {envtarif}")
+                    tarif = float(envtarif) if envtarif else 0.0
+                    logger.info(f"Tarif: {tarif}")
+                    if tarif == 0.0:
+                         logger.info("Tarif not set, using default value")
+                    else:
+                         logger.info(f"Tarif set to {tarif}")
                     return render_template("reports.html", report=report, period=period, tarif=tarif)
      else:
           return render_template("reports.html")
@@ -71,5 +89,5 @@ def getdata():
         return render_template("getdata.html")
 
 if __name__ == "__main__":
-    app.logger.info("Starting Zaptec Report application from Main")
+    logger.info("Starting Zaptec Report application from Main")
     app.run(host='0.0.0.0', port=5000, debug=True)
