@@ -286,7 +286,7 @@ def generate_excel_from_reportform(report, month_year):
 
     # Send the file to the user for download
     return send_file(output, as_attachment=True, download_name=f"report_{month_year}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-  
+
 
 def get_previous_month():
     # Get the previous month
