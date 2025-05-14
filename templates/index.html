@@ -5,4 +5,22 @@
 {% block body %}
 <div style="height: 20px;"></div>
 <div class=pagetitle>Welcome to ZapTec Reporting</div>
+<div style="display: flex; justify-content: center; align-items: flex-start; width: 100%;">
+    <div class="content" style="margin: 0 10%; border: 3px; line-height: 1.5; max-width: 600pt; width: 100%;">
+        <div class="contenttext">
+            <p>Welcome to the ZapTec Reporting system. This is a simple web application that allows you to generate reports based on your data.</p>
+            <p>To get started, please select a report type from the menu above.</p>
+        </div>
+        <div class="contenttext">
+            <p>ZapTec Reporting is run from a container and when left running it will daily gather all data from the past 365 days. Should
+                you somehow lose the database or corrupt the database, just remove the database file and restart the container. The system will then
+                recreate the database and start gathering data from the last 365 days again. On the 'Get Data' page you also have an option to force
+                read the past 365 days. The ZapTec API limits the history to 365 days.</p>
+            <p>When the container is running and reads the data at the same day in the month as found in the .env var "reportday", it will generate
+                a report for the previous month. The report will be sent to the email address found in the .env var "reportemail".</p>
+            <p>You can also generate your own report using the 'reports' option and export this to excel.</p>
+            <p>The tarif used is also in the .env file and is not in dollars or Euro or other currency for ease of use.</p>
+        </div>
+    </div>
+</div>
 {% endblock %}
