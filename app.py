@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 from flask import Flask, render_template, request, send_file
 from datetime import datetime
+import os
 
 # Create the Flask app
 def create_app():
@@ -44,7 +45,8 @@ def reports():
                     app.logger.info(f"Report returned {len(report)} rows for period: {period}")
                     app.logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
                     app.logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
-                    return render_template("reports.html", report=report, period=period)
+                    tarif = float(os.getenv('tarif'))
+                    return render_template("reports.html", report=report, period=period, tarif=tarif)
      else:
           return render_template("reports.html")
      

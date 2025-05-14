@@ -75,6 +75,16 @@ Error: {{ error }}
                 <td class="text-right"><strong>{{ "%.3f"|format(ns.total_billable_energy) }}</strong></td>
                 <td class="text-right"><strong>{{ "%.3f"|format(ns.total_non_billable_energy) }}</strong></td>
             </tr>
+            <tr>
+                <td colspan="4" class="text-right"><strong>Price per KWh:</strong></td>
+                <td class="text-right"><strong>{{ tarif }}</strong></td>
+                <td class="text-right"><strong></strong></td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><strong>Cost:</strong></td>
+                <td class="text-right"><strong>{{ "%.2f"|format(tarif * ns.total_billable_energy) }}</strong></td>
+                <td class="text-right"><strong></strong></td>
+            </tr>
         </tfoot>
     </table>
     <table class="table table-striped table-bordered ">
