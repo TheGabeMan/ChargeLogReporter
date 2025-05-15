@@ -28,7 +28,7 @@ def create_app():
     logger.info("Welcome, Starting Zaptec Report application (Docker logs)")
 
     # For testing purposes:
-    envtarif = os.getenv('envtarif')
+    envtarif = os.getenv('tarif')
     logger.info(f"Env tarif: {envtarif}")
 
     logger.info("Again Welcome, Starting Zaptec Report application (Docker logs)")
@@ -61,7 +61,7 @@ def reports():
                     logger.info(f"Report returned {len(report)} rows for period: {period}")
                     logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
                     logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
-                    envtarif = os.getenv('envtarif')
+                    envtarif = os.getenv('tarif')
                     logger.info(f"Env tarif: {envtarif}")
                     tarif = float(envtarif) if envtarif else 0.0
                     logger.info(f"Tarif: {tarif}")

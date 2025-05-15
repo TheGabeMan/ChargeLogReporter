@@ -13,6 +13,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+database/chargehistory.db
 develop-eggs/
 dist/
 downloads/
