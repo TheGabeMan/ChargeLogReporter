@@ -28,11 +28,4 @@ EXPOSE 5000
 CMD ["sh", "-c", "cron && python app.py"]
 
 # docker build -t chargelogreporter .
-
-# docker run -d -p 5000:5000 \
-#            -v "$(pwd)/.env:/app/.env" \
-#            -v "$(pwd)/database:/app/database" \
-#            chargelogreporter:latest
-
-
-# sudo docker exec -it eloquent_gould /bin/sh
+# docker run -d -p 5000:5000 --name chargelogreporter -v "$(pwd)/.env:/app/.env" -v "$(pwd)/database:/app/database" chargelogreporter:latest

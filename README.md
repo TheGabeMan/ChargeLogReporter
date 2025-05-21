@@ -28,10 +28,3 @@ The database is auto generated when not present and will try to read the last 36
 
 # Guest Account
 When you create an account in the ZapTec portal with the exact name "Guest Account", sessions by this user will show when you ask for a monthly report, but will be filtered out in the Excel export.
-
-
-# Todo:
-- Create docker container
-- Write docker compose
-- Saved Excel sheet should not open full screen
-- PDF export option

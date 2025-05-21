@@ -14,7 +14,7 @@ load_dotenv()
 def create_app():
     app = Flask(__name__, template_folder="./templates")
     logging.basicConfig(
-        filename="app.log", 
+        filename="./database/app.log", 
         level=logging.INFO, 
         encoding="utf-8",
         format='%(asctime)s - %(levelname)s - %(message)s'

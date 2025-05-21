@@ -1,0 +1,10 @@
+version: "3"
+services:
+    chargelogreporter:
+        ports:
+            - 5000:5000
+        container_name: charlogreporter
+        volumes:
+            - $(pwd)/.env:/app/.env
+            - $(pwd)/database:/app/database
+        image: chargelogreporter:latest
