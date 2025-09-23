@@ -121,32 +121,44 @@ def get_charge_history_installation(access_token, apiurl, installationid):
         "Content-Type": "application/json"
     }
 
+    params = {
+        "StartDate": start_date.isoformat(),
+        "EndDate": end_date.isoformat(),
+        "InstallationId": installationid,
+        "GroupBy": GroupBy,
+        "DetailLevel": DetailLevel,
+        "PageSize": PageSize,
+        "PageIndex": PageIndex
+    }
 
-    while True:
-        params = {
-            "StartDate": start_date.isoformat(),
-            "EndDate": end_date.isoformat(),
-            "InstallationId": installationid,
-            "GroupBy": GroupBy,
-            "DetailLevel": DetailLevel,
-            "PageSize": PageSize,
-            "PageIndex": PageIndex
-        }
+    app.logger.info(f"Retrieving charge history from {start_date} to {end_date} - PageIndex {PageIndex}")
+    try:
+        response = requests.get(history_url, headers=headers, params=params)
+        response.raise_for_status()
+        charge_history = response.json()
+        number_of_records = len(charge_history['Data'])
+        app.logger.info(f"Charge history retrieved succesful for page {PageIndex} - Number of records: {number_of_records}")
+        number_of_pages = charge_history['Pages']
+    except requests.exceptions.RequestException as e:
+        app.logger.info(f"Failed to retrieve charge history: {e}")
+        return []
 
-        app.logger.info(f"Retrieving charge history from {start_date} to {end_date} - PageIndex {PageIndex}")
-        try:
-            response = requests.get(history_url, headers=headers, params=params)
-            response.raise_for_status()
-            charge_history = response.json()
-            app.logger.info(f"Charge history retrieved succesful for page {PageIndex}")
-            if len(charge_history['Data']) < PageSize:
-                return charge_history
-            else:
-                PageIndex += 1
-                app.logger.info(f"PageIndex {PageIndex} - continue to get more data")
-        except requests.exceptions.RequestException as e:
-            app.logger.info(f"Failed to retrieve charge history: {e}")
-            return []
+    total_charge_history = charge_history
+    while PageIndex < number_of_pages -1:
+        PageIndex += 1
+        params["PageIndex"] = PageIndex
+        app.logger.info(f"Retrieving charge history PageIndex {PageIndex}")
+
+        response = requests.get(history_url, headers=headers, params=params)
+        response.raise_for_status()
+        charge_history = response.json()
+        number_of_records = len(charge_history['Data'])        
+        total_charge_history['Data'].extend(charge_history['Data'])
+        app.logger.info(f"Charge history retrieved succesful for page {PageIndex} - Number of records: {number_of_records}")
+
+    app.logger.info(f"Total number of records retrieved: {len(total_charge_history['Data'])}")
+    return total_charge_history
+
 
 def get_report_dates():
     # Get current date in UTC
