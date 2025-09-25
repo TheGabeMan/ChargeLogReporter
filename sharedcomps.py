@@ -59,6 +59,7 @@ def read_api():
         else:
             app.logger.info(f"Record {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} already exists in the database.")
     conn.close()
+    return len(charge_history['Data'])
 
 def get_accesstoken(username, password, apiurl):
     """
@@ -299,6 +300,33 @@ def generate_excel_from_reportform(report, month_year):
 
     # Send the file to the user for download
     return send_file(output, as_attachment=True, download_name=f"report_{month_year}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+def get_monthly_totals():
+    # Connect to the SQLite database
+    conn, cursor = sql_connect()
+
+    # Query to fetch the monthly totals
+    tarif = float(os.getenv('tarif', '0'))
+    query = f"""
+    SELECT
+        strftime('%Y-%m', datetime(StartDateTime, 'unixepoch')) AS Month,
+        SUM(CASE WHEN UserFullName = 'Guest Account' THEN Energy ELSE 0 END) AS non_billable_energy,
+        SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) AS billable_energy,
+        SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) * {tarif} AS cost
+    FROM sessions
+    GROUP BY Month
+    ORDER BY Month DESC
+    """
+    cursor.execute(query)
+
+    # Fetch all rows and convert to dictionary
+    rows = cursor.fetchall()
+    monthly_totals = [dict((cursor.description[i][0], value) for i, value in enumerate(row)) for row in rows]
+
+    # Close the connection
+    conn.close()
+
+    return monthly_totals
 
 
 def get_previous_month():

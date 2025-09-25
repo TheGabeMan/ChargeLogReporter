@@ -88,10 +88,16 @@ def generate_excel():
 @app.route("/getdata", methods=["GET","POST"])
 def getdata():
     if request.method == "POST":
-        sharedcomps.read_api()
-        return render_template("getdata.html", output="Report data has been updated.")
+        number_of_records = sharedcomps.read_api()
+        return render_template("getdata.html", output=f"Report data has been updated. Total records found: {number_of_records}")
     else:
         return render_template("getdata.html")
+
+@app.route("/totals", methods=["GET","POST"])
+def totals():
+    ''' Get monthly totals from the database over the past years '''
+    monthly_totals = sharedcomps.get_monthly_totals()
+    return render_template("totals.html", monthly_totals=monthly_totals)
 
 if __name__ == "__main__":
     logger.info("Starting Zaptec Report application from Main")

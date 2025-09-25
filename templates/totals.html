@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block head %}
+{% endblock %}
+
+{% block body %}
+<div class=pagetitle>Total overview</div>
+
+{% if error|length > 0 %}
+Error: {{ error }}
+{% endif %}
+
+{% if monthly_totals|length > 0 %}
+<div style="margin: 0 10%;border: 3px;">
+    <table class="table table-striped table-bordered ">
+        <thead class="thead-dark"></thead>
+            <tr>
+                <th style="width: 10%;">User</th>
+                <th style="width: 10%;">DeviceID</th>
+                <th style="width: 20%;">Month</th>
+                <th style="width: 10%;">Energy billable (KWh)</th>
+                <th style="width: 10%;">Energy non-billable (KWh)</th>
+                <th style="width: 20%;">Cost</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(total_billable_energy = 0, total_non_billable_energy = 0, total_cost = 0) %}
+            {% for row in monthly_totals %}
+                <tr style="color: rgb(147, 111, 73);">
+                    <td><em>{{ row.UserFullName }}</em></td>
+                    <td><em>{{ row.DeviceID }}</em></td>
+                    <td><em>{{ row.Month }}</em></td>
+                    <td><em>{{ row.billable_energy }}</em></td>
+                    <td><em>{{ row.non_billable_energy }}</em></td>
+                    <td><em>{{ row.cost }}</em></td>
+                    <td></td>
+                    {% set ns.total_billable_energy = ns.total_billable_energy + row.billable_energy %}
+                    {% set ns.total_non_billable_energy = ns.total_non_billable_energy + row.non_billable_energy %}
+                    {% set ns.total_cost = ns.total_cost + row.cost %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-right"><strong>Total Energy (KWh):</strong></td>
+                <td class="text-right"><strong>{{ "%.3f"|format(ns.total_billable_energy) }}</strong></td>
+                <td class="text-right"><strong>{{ "%.3f"|format(ns.total_non_billable_energy) }}</strong></td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><strong>Price per KWh:</strong></td>
+                <td class="text-right"><strong>{{ tarif }}</strong></td>
+                <td class="text-right"><strong></strong></td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right"><strong>Cost:</strong></td>
+                <td class="text-right"><strong>{{ "%.2f"|format(ns.total_cost) }}</strong></td>
+                <td class="text-right"><strong></strong></td>
+            </tr>
+        </tfoot>
+    </table>
+    <table class="table table-striped table-bordered ">
+        <tr>
+            <h6 style="font-size: small;">*Non-billable energy is the energy consumed by the 'Guest Account'.</h6>
+        </tr>
+    </table>
+
+</div>
+
+
+{% endif %}
+
+{% endblock %}
