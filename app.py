@@ -96,8 +96,18 @@ def getdata():
 @app.route("/totals", methods=["GET","POST"])
 def totals():
     ''' Get monthly totals from the database over the past years '''
-    monthly_totals = sharedcomps.get_monthly_totals()
-    return render_template("totals.html", monthly_totals=monthly_totals)
+    if request.method == "GET":
+        # monthly_totals = sharedcomps.get_monthly_totals()
+        return render_template("totals.html")
+    elif request.method == "POST":
+        if not request.form.get('period_start') or not request.form.get('period_end'):
+            return render_template("totals.html", error="Please provide both start and end periods.")
+        
+        period_start = request.form.get('period_start')
+        period_end = request.form.get('period_end')
+        logger.info(f"Get a report from Start period: {period_start}, End period: {period_end}")
+        monthly_totals = sharedcomps.get_monthly_totals(period_start=period_start, period_end=period_end)
+        return render_template("totals.html", monthly_totals=monthly_totals)
 
 if __name__ == "__main__":
     logger.info("Starting Zaptec Report application from Main")

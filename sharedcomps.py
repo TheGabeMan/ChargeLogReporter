@@ -301,26 +301,37 @@ def generate_excel_from_reportform(report, month_year):
     # Send the file to the user for download
     return send_file(output, as_attachment=True, download_name=f"report_{month_year}.xlsx", mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
-def get_monthly_totals():
+def get_monthly_totals(period_start=None, period_end=None):
     # Connect to the SQLite database
     conn, cursor = sql_connect()
 
     # Query to fetch the monthly totals
     tarif = float(os.getenv('tarif', '0'))
+
+    # Convert the period to the format "YYYY-MM"
+    start = datetime.strptime(period_start, "%Y-%m")
+    end = datetime.strptime(period_end, "%Y-%m")
+    period_start_timestamp = int(start.timestamp())
+    period_end_timestamp = int((end.replace(day=28) + timedelta(days=4)).replace(day=1).timestamp())
+
     query = f"""
     SELECT
-        strftime('%Y-%m', datetime(StartDateTime, 'unixepoch')) AS Month,
+        strftime('%Y-%m', datetime(startdatetime, 'unixepoch')) AS Month,
+        UserFullName, DeviceID,
         SUM(CASE WHEN UserFullName = 'Guest Account' THEN Energy ELSE 0 END) AS non_billable_energy,
         SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) AS billable_energy,
         SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) * {tarif} AS cost
     FROM sessions
-    GROUP BY Month
-    ORDER BY Month DESC
+    WHERE startdatetime >= ? AND startdatetime < ?
+    GROUP BY UserFullName, Month
+    ORDER BY Month ASC
     """
-    cursor.execute(query)
+    cursor.execute(query, (period_start_timestamp, period_end_timestamp))
+    
 
     # Fetch all rows and convert to dictionary
     rows = cursor.fetchall()
+    app.logger.info(f"Monthly totals query returned {len(rows)} rows.")
     monthly_totals = [dict((cursor.description[i][0], value) for i, value in enumerate(row)) for row in rows]
 
     # Close the connection

@@ -4,22 +4,55 @@
 
 {% block body %}
 <div class=pagetitle>Total overview</div>
+<div style="height: 20px;"></div>
+<div style="margin: 0 10%;border: 3px;">
+    <form action="{{ url_for('totals') }}" method="post">
+        <table class="table table-striped table-bordered ">
+            <tr>
+                <td>
+                    <label for="period_start">Start Month and Year:&nbsp;&nbsp;</label>
+                    <input 
+                        type="month" 
+                        id="period_start" 
+                        name="period_start"
+                        min="2000-01" 
+                        max="2030-12"
+                    >
+                </td>
+                <td>
+                    <label for="period_end">End Month and Year:&nbsp;&nbsp;</label>
+                    <input 
+                        type="month" 
+                        id="period_end" 
+                        name="period_end"
+                        min="2000-01" 
+                        max="2030-12"
+                    >
+                </td>
+                <td>
+                    <input type="submit" value="Get Totals" id="btn_get_report">
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+<div style="height: 20px;"></div>
 
 {% if error|length > 0 %}
 Error: {{ error }}
 {% endif %}
 
 {% if monthly_totals|length > 0 %}
-<div style="margin: 0 10%;border: 3px;">
+<div style="margin: 0 20%;border: 3px;">
     <table class="table table-striped table-bordered ">
         <thead class="thead-dark"></thead>
             <tr>
                 <th style="width: 10%;">User</th>
-                <th style="width: 10%;">DeviceID</th>
-                <th style="width: 20%;">Month</th>
-                <th style="width: 10%;">Energy billable (KWh)</th>
-                <th style="width: 10%;">Energy non-billable (KWh)</th>
-                <th style="width: 20%;">Cost</th>
+                <th style="width: 5%;">DeviceID</th>
+                <th style="width: 10%;">Month</th>
+                <th style="width: 5%;">Energy billable (KWh)</th>
+                <th style="width: 5%;">Energy non-billable (KWh)</th>
+                <th style="width: 5%;">Cost</th>
 
             </tr>
         </thead>
@@ -29,11 +62,10 @@ Error: {{ error }}
                 <tr style="color: rgb(147, 111, 73);">
                     <td><em>{{ row.UserFullName }}</em></td>
                     <td><em>{{ row.DeviceID }}</em></td>
-                    <td><em>{{ row.Month }}</em></td>
-                    <td><em>{{ row.billable_energy }}</em></td>
-                    <td><em>{{ row.non_billable_energy }}</em></td>
-                    <td><em>{{ row.cost }}</em></td>
-                    <td></td>
+                    <td class="text-right"><em>{{ row.Month }}</em></td>
+                    <td class="text-right"><em>{{ "%.2f"|format(row.billable_energy) }}</em></td>
+                    <td class="text-right"><em>{{ "%.2f"|format(row.non_billable_energy) }}</em></td>
+                    <td class="text-right"><em>{{ "%.2f"|format(row.cost) }}</em></td>
                     {% set ns.total_billable_energy = ns.total_billable_energy + row.billable_energy %}
                     {% set ns.total_non_billable_energy = ns.total_non_billable_energy + row.non_billable_energy %}
                     {% set ns.total_cost = ns.total_cost + row.cost %}
@@ -42,19 +74,12 @@ Error: {{ error }}
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="4" class="text-right"><strong>Total Energy (KWh):</strong></td>
+                <td><em>UserFullName</em></td>
+                <td><em>DeviceID</em></td>
+                <td><strong>Totals:</strong></td>
                 <td class="text-right"><strong>{{ "%.3f"|format(ns.total_billable_energy) }}</strong></td>
                 <td class="text-right"><strong>{{ "%.3f"|format(ns.total_non_billable_energy) }}</strong></td>
-            </tr>
-            <tr>
-                <td colspan="4" class="text-right"><strong>Price per KWh:</strong></td>
-                <td class="text-right"><strong>{{ tarif }}</strong></td>
-                <td class="text-right"><strong></strong></td>
-            </tr>
-            <tr>
-                <td colspan="4" class="text-right"><strong>Cost:</strong></td>
                 <td class="text-right"><strong>{{ "%.2f"|format(ns.total_cost) }}</strong></td>
-                <td class="text-right"><strong></strong></td>
             </tr>
         </tfoot>
     </table>
