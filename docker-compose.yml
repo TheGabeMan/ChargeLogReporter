@@ -1,10 +1,12 @@
-version: "3"
 services:
-    chargelogreporter:
-        ports:
-            - 5000:5000
-        container_name: chargelogreporter
-        volumes:
-            - $(pwd)/.env:/.env
-            - $(pwd)/database:/database
-        image: chargelogreporter:latest
+  app:
+    # They pull directly from your GitHub Package registry
+    image: ghcr.io/thegabeman/chargelogreporter:latest
+    container_name: charge-log-reporter
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./database:/database
+    restart: always
