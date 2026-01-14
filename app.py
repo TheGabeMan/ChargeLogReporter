@@ -59,8 +59,8 @@ def reports():
                     return render_template("reports.html", error="No data available for the selected period.")
                else:
                     logger.info(f"Report returned {len(report)} rows for period: {period}")
-                    logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - {report[0]['UserUserName']} - Date: {report[0]['StartDateTime']}")
-                    logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - {report[-1]['UserUserName']} - Date: {report[-1]['StartDateTime']}")
+                    logger.info(f"First row of report: {report[0]['Id'][:14]}xxxx-xxxx - Date: {report[0]['StartDateTime']}")
+                    logger.info(f"Last row of report: {report[-1]['Id'][:14]}xxxx-xxxx - Date: {report[-1]['StartDateTime']}")
                     envtarif = os.getenv('tarif')
                     logger.info(f"Env tarif: {envtarif}")
                     tarif = float(envtarif) if envtarif else 0.0

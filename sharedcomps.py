@@ -14,6 +14,7 @@ from io import BytesIO
 import smtplib
 from email.message import EmailMessage
 from flask import Flask, render_template, request, redirect, send_file
+import csv
 
 def read_api():
     ''' Get data from API and store in the database '''
@@ -31,7 +32,7 @@ def read_api():
     charge_history = get_charge_history_installation(access_token=access_token, apiurl=apiurl, installationid=installationid)
 
      #### API data
-     # UserUserName
+     # UserUserName      (Deprecated and now replaced by UserEmail)
      # Id (SessionId)
      # DeviceID
      # StartDateTime
@@ -43,21 +44,22 @@ def read_api():
      # UserEmail
      # UserId
 
+    ## debugger_json(charge_history)
     ## Open DB connection to insert data
     conn, cursor = sql_connect()
     for key in charge_history['Data']:
-        app.logger.info(f"From API retrieved {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} - Date: {key['StartDateTime']}")
+        app.logger.info(f"From API retrieved {key['Id'][:14]}xxxx-xxxx - Date: {key['StartDateTime']}")
         KeyIsUnique = False
         KeyIsUnique = sql_check_unique_key(key,cursor)
         if KeyIsUnique:
-            app.logger.info(f"Write {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} - Date: {key['StartDateTime']} to database.")
+            app.logger.info(f"Write {key['Id'][:14]}xxxx-xxxx - Date: {key['StartDateTime']} to database.")
             Result = sql_insert(key,cursor,conn)
             if not Result:
-                app.logger.info(f"Error writing record {key['Id'][-9:]}xxxx-xxxx - {key['UserUserName']} to the database.")
+                app.logger.info(f"Error writing record {key['Id'][-9:]}xxxx-xxxx to the database.")
             else:
-                app.logger.info(f"Record {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} successfully written to the database.")  
+                app.logger.info(f"Record {key['Id'][:14]}xxxx-xxxx successfully written to the database.")  
         else:
-            app.logger.info(f"Record {key['Id'][:14]}xxxx-xxxx - {key['UserUserName']} already exists in the database.")
+            app.logger.info(f"Record {key['Id'][:14]}xxxx-xxxx already exists in the database.")
     conn.close()
     return len(charge_history['Data'])
 
@@ -266,16 +268,15 @@ def generate_excel_from_reportform(report, month_year):
     # Filter columns in report
     filtered_report = []
     for entry in jsreport:
-        if entry["UserFullName"] != "Guest Account":
-            filtered_entry = {
-                "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
-                "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
-                "Energy (KWh)": entry["Energy"]
-            }
-            filtered_report.append(filtered_entry)
+        filtered_entry = {
+            "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
+            "Energy (KWh)": entry["Energy"]
+        }
+        filtered_report.append(filtered_entry)
 
     # Calculate the sum of the Energy column
-    total_energy = sum(entry["Energy"] for entry in jsreport if entry["UserFullName"] != "Guest Account")
+    total_energy = sum(entry["Energy"] for entry in jsreport)
     app.logger.info(f"Total energy for the report: {total_energy}")
     filtered_report.append({"To": "Total Energy (KWh)", "Energy (KWh)": total_energy})
 
@@ -383,30 +384,22 @@ def sql_insert(key, cursor, conn):
     
         cursor.execute('''
         INSERT INTO sessions (
-        "UserUserName",
         "Id",
         "DeviceID",
         "StartDateTime",
         "EndDateTime",
         "Energy",
-        "UserFullName",
         "ChargerId",
-        "DeviceName",
-        "UserEmail",
-        "UserId"        ) 
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )''',
+        "DeviceName") 
+        VALUES ( ?, ?, ?, ?, ?, ?, ? )''',
             (
-                key['UserUserName'],
                 key['Id'],
                 key['DeviceId'],
                 UnixStartDateTime,
                 UnixEndDateTime,
                 key['Energy'],
-                key['UserFullName'],
                 key['ChargerId'],
-                key['DeviceName'],
-                key['UserEmail'],
-                key['UserId']
+                key['DeviceName']
             ))
         conn.commit()
         return True
@@ -426,17 +419,13 @@ def sql_createtable(conn, cursor):
     try:
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
-            "UserUserName"	TEXT NOT NULL,
             "Id"	TEXT NOT NULL UNIQUE,
             "DeviceID"	TEXT,
             "StartDateTime"	INT NOT NULL,
             "EndDateTime"	INT NOT NULL,
             "Energy"	INTEGER NOT NULL,
-            "UserFullName"	TEXT,
             "ChargerId"	TEXT,
             "DeviceName"	TEXT,
-            "UserEmail"	TEXT,
-            "UserId"	TEXT,
             PRIMARY KEY("StartDateTime")
         )''')
         conn.commit()
@@ -476,3 +465,44 @@ def send_email(smtp_report_attachment, period):
         return False
 
 
+def debugger_json(charge_history):    # Debugging function to log the JSON data
+    try:
+        json_path = 'debug_charge_history.json'
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(charge_history, f, indent=4, ensure_ascii=False, default=str)
+        app.logger.info(f"Charge history JSON data written to {json_path}")
+    except Exception as e:
+        app.logger.info(f"Failed to write debug JSON: {e}")
+        return
+
+    # Normalize to list of records
+    if isinstance(charge_history, dict) and 'Data' in charge_history:
+        records = charge_history.get('Data') or []
+    elif isinstance(charge_history, list):
+        records = charge_history
+    else:
+        app.logger.info("Charge history contains no records to write to CSV")
+        return
+
+    if not records:
+        app.logger.info("No records found in charge history; CSV not created")
+        return
+
+    # Build fieldnames as union of keys excluding unwanted fields
+    excluded = {'ChargerFirmwareVersion', 'SignedSession'}
+    keys = []
+    for rec in records:
+        if isinstance(rec, dict):
+            for k in rec.keys():
+                if k not in excluded and k not in keys:
+                    keys.append(k)
+
+    try:
+        csv_path = 'charge_history.csv'
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            dict_writer = csv.DictWriter(f, fieldnames=keys, extrasaction='ignore')
+            dict_writer.writeheader()
+            dict_writer.writerows(records)
+        app.logger.info(f"Charge history CSV data written to {csv_path}")
+    except Exception as e:
+        app.logger.info(f"Failed to write charge history CSV: {e}")
