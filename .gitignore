@@ -1,6 +1,7 @@
 .env
 chargehistory.db
-ZapTecReporting.code-workspace 
+ZapTecReporting.code-workspace
+./database
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
