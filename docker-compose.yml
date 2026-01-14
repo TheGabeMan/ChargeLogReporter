@@ -3,8 +3,8 @@ services:
     chargelogreporter:
         ports:
             - 5000:5000
-        container_name: gabrie/chargelogreporter:latest
+        container_name: chargelogreporter
         volumes:
-            - $(pwd)/.env:/app/.env
-            - $(pwd)/database:/app/database
+            - $(pwd)/.env:/.env
+            - $(pwd)/database:/database
         image: chargelogreporter:latest
