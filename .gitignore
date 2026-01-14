@@ -2,6 +2,7 @@
 chargehistory.db
 ZapTecReporting.code-workspace
 ./database
+*.tar.gz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

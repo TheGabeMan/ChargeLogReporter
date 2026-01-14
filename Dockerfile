@@ -27,5 +27,12 @@ EXPOSE 5000
 # Define the command to run the Flask application AND the cron service
 CMD ["sh", "-c", "cron && python app.py"]
 
-# docker build -t chargelogreporter .
-# docker run -d -p 5000:5000 --name chargelogreporter -v "$(pwd)/.env:/app/.env" -v "$(pwd)/database:/app/database" chargelogreporter:latest
+# Make docker image
+# docker build -t chargelogreporter:v0.55 .
+
+# Save docker image to a tar.gz file
+# docker save chargelogreporter:v0.55 | gzip > chargelogreporter_v0.55.tar.gz
+
+# On another machine, load the docker image from the tar.gz file
+# docker load -i chargelogreporter_v0.55.tar.gz
+
