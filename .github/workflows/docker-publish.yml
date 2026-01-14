@@ -34,14 +34,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY  }}/${{ env.IMAGE_NAME }}
           tags: |
-            # This creates a 'latest' tag only when pushing to the default branch
+            # This makes sure the 'latest' tag updates on every push to main
             type=raw,value=latest,enable={{is_default_branch}}
-            # This creates a tag based on your Git tag (v1.0.0)
+            # This captures your v1.0.2 tag automatically
             type=ref,event=tag
-            # This creates a tag based on the branch name (main)
+            # This adds the branch name (main)
             type=ref,event=branch
-            # This creates a tag based on the short commit SHA
-            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
