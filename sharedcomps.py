@@ -268,6 +268,8 @@ def generate_excel_from_reportform(report, month_year):
     # Filter columns in report
     filtered_report = []
     for entry in jsreport:
+        if entry["UserFullName"] == 'Guest Account':
+            continue
         filtered_entry = {
             "From": datetime.fromtimestamp(entry["StartDateTime"]).strftime('%d-%m-%Y %H:%M'),
             "To": datetime.fromtimestamp(entry["EndDateTime"]).strftime('%d-%m-%Y %H:%M'),
@@ -315,33 +317,19 @@ def get_monthly_totals(period_start=None, period_end=None):
     period_start_timestamp = int(start.timestamp())
     period_end_timestamp = int((end.replace(day=28) + timedelta(days=4)).replace(day=1).timestamp())
 
-    # query = f"""
-    # SELECT
-    #     strftime('%Y-%m', datetime(startdatetime, 'unixepoch')) AS Month,
-    #     UserFullName, DeviceID,
-    #     SUM(CASE WHEN UserFullName = 'Guest Account' THEN Energy ELSE 0 END) AS non_billable_energy,
-    #     SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) AS billable_energy,
-    #     SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) * {tarif} AS cost
-    # FROM sessions
-    # WHERE startdatetime >= ? AND startdatetime < ?
-    # GROUP BY UserFullName, Month
-    # ORDER BY Month ASC
-    # """
-    
-    # Remove below when userfullname bug in API is fixed
     query = f"""
     SELECT
         strftime('%Y-%m', datetime(startdatetime, 'unixepoch')) AS Month,
-        DeviceID,
-        0 AS non_billable_energy,
-        Energy AS billable_energy,
-        Energy * {tarif} AS cost
+        UserFullName, DeviceID,
+        SUM(CASE WHEN UserFullName = 'Guest Account' THEN Energy ELSE 0 END) AS non_billable_energy,
+        SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) AS billable_energy,
+        SUM(CASE WHEN UserFullName != 'Guest Account' THEN Energy ELSE 0 END) * {tarif} AS cost
     FROM sessions
     WHERE startdatetime >= ? AND startdatetime < ?
-    GROUP BY Month
+    GROUP BY UserFullName, Month
     ORDER BY Month ASC
     """
-
+    
     cursor.execute(query, (period_start_timestamp, period_end_timestamp))
     
 
@@ -399,22 +387,30 @@ def sql_insert(key, cursor, conn):
     
         cursor.execute('''
         INSERT INTO sessions (
+        "UserUserName",
         "Id",
         "DeviceID",
         "StartDateTime",
         "EndDateTime",
         "Energy",
         "ChargerId",
-        "DeviceName") 
-        VALUES ( ?, ?, ?, ?, ?, ?, ? )''',
+        "DeviceName",
+        "UserFullName",
+        "UserEmail",
+        "UserId") 
+        VALUES ( ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
             (
+                key.get('UserUserName', 'Unknown'),
                 key['Id'],
                 key['DeviceId'],
                 UnixStartDateTime,
                 UnixEndDateTime,
                 key['Energy'],
                 key['ChargerId'],
-                key['DeviceName']
+                key['DeviceName'],
+                key.get('UserFullName', 'Unknown'),
+                key.get('UserEmail', 'Unknown'),
+                key.get('UserId', 'Unknown')
             ))
         conn.commit()
         return True
@@ -434,6 +430,7 @@ def sql_createtable(conn, cursor):
     try:
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
+            "UserUserName"	TEXT,
             "Id"	TEXT NOT NULL UNIQUE,
             "DeviceID"	TEXT,
             "StartDateTime"	INT NOT NULL,
@@ -441,6 +438,9 @@ def sql_createtable(conn, cursor):
             "Energy"	INTEGER NOT NULL,
             "ChargerId"	TEXT,
             "DeviceName"	TEXT,
+            "UserFullName"	TEXT,
+            "UserEmail"	TEXT,
+            "UserId"	TEXT,
             PRIMARY KEY("StartDateTime")
         )''')
         conn.commit()

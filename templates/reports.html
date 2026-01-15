@@ -35,6 +35,7 @@ Error: {{ error }}
     <table class="table table-striped table-bordered ">
         <thead class="thead-dark"></thead>
             <tr>
+                <th style="width: 20%;">User</th>
                 <th style="width: 10%;">DeviceID</th>
                 <th style="width: 20%;">StartDateTime</th>
                 <th style="width: 20%;">EndDateTime</th>
@@ -46,12 +47,19 @@ Error: {{ error }}
             {% set ns = namespace(total_billable_energy = 0, total_non_billable_energy = 0) %}
             {% for row in report %}
             <tr>
+                <td>{{ row.UserFullName }}</td>
                 <td>{{ row.DeviceID }}</td>
                 <td>{{ row.StartDateTime|float|timestamp_to_date }}</td>
                 <td>{{ row.EndDateTime|float|timestamp_to_date }}</td>
-                <td class="text-right">{{ "%.3f"|format(row.Energy) }}</td>
-                <td></td>
-                {% set ns.total_billable_energy = ns.total_billable_energy + row.Energy %}
+                {% if row.UserFullName == 'Guest Account' %}
+                    <td class="text-right"></td>
+                    <td class="text-right">{{ "%.3f"|format(row.Energy) }}</td>
+                    {% set ns.total_non_billable_energy = ns.total_non_billable_energy + row.Energy %}
+                {% else %}
+                    <td class="text-right">{{ "%.3f"|format(row.Energy) }}</td>
+                    <td class="text-right"></td>
+                    {% set ns.total_billable_energy = ns.total_billable_energy + row.Energy %}
+                {% endif %}
             </tr>
             {% endfor %}
         </tbody>
